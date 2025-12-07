@@ -1,0 +1,42 @@
+!!python/object:giskard.core.core.DatasetProcessFunctionMeta
+args: null
+callable_obj: null
+cell_level: false
+clauses:
+- columnName: petal length (cm)
+  comparisonType: LOWER_THAN
+  value: !!python/object/apply:numpy.core.multiarray.scalar
+  - !!python/object/apply:numpy.dtype
+    args:
+    - f8
+    - false
+    - true
+    state: !!python/tuple
+    - 3
+    - <
+    - null
+    - null
+    - null
+    - -1
+    - -1
+    - 0
+  - !!binary |
+    AAAAmJmZA0A=
+code: ''
+column_type: null
+display_name: '`petal length (cm)` < 2.450'
+doc: !!python/object:giskard.core.core.CallableDocumentation
+  description: Automatically generated slicing function
+  parameters: {}
+full_name: null
+module: null
+module_doc: null
+name: '`petal length (cm)` < 2.450'
+process_type: !!python/object/apply:giskard.core.core.DatasetProcessFunctionType
+- CLAUSES
+tags:
+- pickle
+- scan
+type: SLICE
+uuid: 3b8d8594-15bf-5a46-8995-a15aa3d97646
+version: null

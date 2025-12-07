@@ -1,41 +1,38 @@
 import sys
 from pathlib import Path
 
-# Add project root to Python path
+# Ensure project root is on the Python path
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-# Now your imports will work
-
-
-import sys
 from src.logger import logging
 
-def error_message_detail(error,error_detail:sys):
-    _,_,exc_tb = error_detail.exc_info()
-    file_name = exc_tb.tb_frame.f_code.co_filename
 
-    error_message = "Error occured in python script name [{0}] line number [{1}] error message [{2}]".format(
-        file_name, exc_tb.tb_lineno, str(error)
+def error_message_detail(error, error_detail: sys):
+    """
+    Build a readable error message with file name and line number.
+    """
+    _, _, exc_tb = error_detail.exc_info()
+    file_name = exc_tb.tb_frame.f_code.co_filename
+    line_no = exc_tb.tb_lineno
+    return (
+        f"Error occurred in python script [{file_name}] "
+        f"at line [{line_no}]: {str(error)}"
     )
 
-    return error_message
 
 class CustomException(Exception):
-    
-    def __init__(self, error_message, error_detail:sys):
+    """
+    Custom exception that logs detailed error info.
+    """
+
+    def __init__(self, error_message, error_detail: sys):
         super().__init__(error_message)
-        self.error_message = error_message_detail(error_message, error_detail=error_detail)
+        self.error_message = error_message_detail(
+            error_message, error_detail=error_detail
+        )
+        logging.error(self.error_message)
 
     def __str__(self):
-        return self.error_message    
-    
-
-if __name__=="__main__":
-    logging.info("Logging has started")
-    try:
-        a=1/0
-        print(a)
-    except Exception as e:
-        logging.info('Division by zero') 
-        raise CustomException(e,sys)
+        return self.error_message

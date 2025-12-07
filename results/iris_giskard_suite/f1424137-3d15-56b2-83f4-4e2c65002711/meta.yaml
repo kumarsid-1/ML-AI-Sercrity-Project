@@ -1,0 +1,71 @@
+!!python/object:giskard.core.core.TestFunctionMeta
+args:
+  dataset: !!python/object:giskard.core.core.FunctionArgument
+    argOrder: 1
+    default: null
+    name: dataset
+    optional: false
+    type: Dataset
+  model: !!python/object:giskard.core.core.FunctionArgument
+    argOrder: 0
+    default: null
+    name: model
+    optional: false
+    type: BaseModel
+  slicing_function: !!python/object:giskard.core.core.FunctionArgument
+    argOrder: 2
+    default: null
+    name: slicing_function
+    optional: false
+    type: SlicingFunction
+  threshold: !!python/object:giskard.core.core.FunctionArgument
+    argOrder: 3
+    default: 0.5
+    name: threshold
+    optional: true
+    type: float
+callable_obj: !!python/name:giskard.testing.tests.statistic.test_theil_u ''
+code: "@test(\n    name=\"Theil's U\",\n    tags=[\"statistic\", \"nominal association\"\
+  , \"classification\"],\n    debug_description=debug_description_prefix + \"of <b>the\
+  \ data slice that was given as an input of the test</b>.\",\n)\ndef test_theil_u(\n\
+  \    model: BaseModel, dataset: Dataset, slicing_function: SlicingFunction, threshold:\
+  \ float = 0.5\n) -> TestResult:\n    r\"\"\"Tests for nominal association between\
+  \ a dataset slice and the model predictions using Theil's U.\n\n    Theil's U statistical\
+  \ test for nominal association is a measure used to assess the strength and direction\n\
+  \    of association between two categorical variables. It quantifies the inequality\
+  \ in the distribution of one variable\n    relative to the distribution of the other\
+  \ variable, providing insights into the pattern of association between\n    them.\
+  \ Theil's U ranges from 0 to 1, where 0 indicates no association, and 1 indicates\
+  \ a perfect association.\n\n    Description: Theil's U for nominal association is\
+  \ commonly used to analyze the relationships between variables like\n    ethnicity,\
+  \ gender, or occupation. It considers the proportions of one variable's categories\
+  \ within each category of\n    the other variable. The calculation involves comparing\
+  \ the observed joint distribution of the two variables with\n    what would be expected\
+  \ if there were no association.\n    Mathematically, Theil's U for nominal association\
+  \ can be expressed as:\n\n    .. math::\n\n       U = \\frac{H(x|y) - H(y|x)}{H(x)}\n\
+  \n    where :math:`H(x|y)`, :math:`H(y|x)` are the conditional entropies of the\
+  \ two variables and :math:`H(x)` is the\n    entropy of the first variable.\n\n\
+  \    Parameters\n    ----------\n    model : BaseModel\n        Model used to compute\
+  \ the test\n    dataset : Dataset\n        Dataset used to compute the test\n  \
+  \  slicing_function : SlicingFunction\n        Slicing function to be applied on\
+  \ the dataset\n    threshold : float\n        Threshold value for the Theil's U\
+  \ score (Default value = 0.5)\n    debug : bool\n        If True and the test fails,\n\
+  \        a dataset will be provided containing the rows of the dataset slice. (Default\
+  \ value = False)\n\n    Returns\n    -------\n    TestResult\n        The test result.\n\
+  \    \"\"\"\n    return test_nominal_association(model, dataset, slicing_function,\
+  \ \"theil_u\", threshold).execute()\n"
+debug_description: This debugging session opens one by one all the examples of <b>the
+  data slice that was given as an input of the test</b>.
+display_name: Theil's U
+full_name: giskard.testing.tests.statistic.test_theil_u
+module: giskard.testing.tests.statistic
+module_doc: Statistical tests
+name: test_theil_u
+tags:
+- statistic
+- nominal association
+- classification
+- giskard
+type: TEST
+uuid: f1424137-3d15-56b2-83f4-4e2c65002711
+version: null

@@ -2,4 +2,8 @@ numpy
 pandas
 flask
 matplotlib
+giskard
+torch
+river
+torchvision
 -e .
