@@ -1,19 +1,14 @@
 import os
 import sys
 from typing import Any
-
 import numpy as np
 from matplotlib.figure import Figure
-
 from src.config import OUT_DIR
 from src.logger import logging
 from src.exception import CustomException
 
-
+# Save figures to the result directory and return path
 def save_fig(fig: Figure, name: str) -> str:
-    """
-    Save figure to results directory and return path.
-    """
     try:
         path = os.path.join(OUT_DIR, name)
         fig.savefig(path, dpi=150, bbox_inches="tight")
@@ -22,11 +17,9 @@ def save_fig(fig: Figure, name: str) -> str:
     except Exception as e:
         raise CustomException(e, sys)
 
-
+# Computing Population Stability Index (PSI) between expected and actual distributions.
 def compute_psi(expected: Any, actual: Any, bins: int = 10) -> float:
-    """
-    Compute Population Stability Index (PSI).
-    """
+    logging.info("Computing PSI")
     try:
         expected = np.array(expected)
         actual = np.array(actual)
@@ -47,18 +40,15 @@ def compute_psi(expected: Any, actual: Any, bins: int = 10) -> float:
     except Exception as e:
         raise CustomException(e, sys)
 
-
+# Compatibility wrapper for different river ADWIN versions to check if any change is detected. 
 def adwin_change_detected(adwin) -> bool:
-    """
-    Compatibility wrapper for different river ADWIN versions.
-    """
     try:
         if hasattr(adwin, "change_detected"):
-            attr = adwin.change_detected
-            return attr() if callable(attr) else bool(attr)
+            atr = adwin.change_detected
+            return atr() if callable(atr) else bool(atr)
         if hasattr(adwin, "detected_change"):
-            attr = adwin.detected_change
-            return attr() if callable(attr) else bool(attr)
+            atr = adwin.detected_change
+            return atr() if callable(atr) else bool(atr)
         return False
     except Exception as e:
         raise CustomException(e, sys)

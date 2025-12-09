@@ -1,17 +1,13 @@
 import os
 import random
 import sys
-
 import numpy as np
 import torch
-
 from src.logger import logging
 from src.exception import CustomException
 
-# -------------------------------------------------------------------
-# GLOBAL SETTINGS
-# -------------------------------------------------------------------
 
+# GLOBAL SETTINGS
 SEED: int = 42
 DEVICE = torch.device("cpu")
 
@@ -19,10 +15,11 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(PROJECT_ROOT, "results")
 
 
+logging.info(f"Device: {DEVICE}")
+logging.info(f"Project root: {PROJECT_ROOT}")
+
+# Creating results directory if it does not exists and log any system errors
 def init_directories():
-    """
-    Create results directory and log any filesystem issues.
-    """
     try:
         os.makedirs(OUT_DIR, exist_ok=True)
         logging.info(f"Output directory initialized at: {OUT_DIR}")
@@ -30,10 +27,8 @@ def init_directories():
         raise CustomException(e, sys)
 
 
+# Setting Global seed
 def set_seed(seed: int = SEED) -> None:
-    """
-    Set global random seed for reproducibility.
-    """
     try:
         global SEED
         SEED = seed
@@ -49,5 +44,4 @@ def set_seed(seed: int = SEED) -> None:
 try:
     init_directories()
 except Exception as e:
-    # This will already be logged in CustomException
     raise
