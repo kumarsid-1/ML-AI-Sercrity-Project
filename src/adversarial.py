@@ -38,15 +38,15 @@ def adversarial_eval(model, test_loader, eps: float = 0.2):
         logger.info("Evaluating model on clean examples")
         clean_preds = model(img).argmax(1)
         clean_acc = (clean_preds == lbs).float().mean().item()
-        logger.info(f"Batch clean accuracy: {clean_acc:.4f}")
+        logger.info(f"Batch clean accuracy: {clean_acc:.5f}")
         logger.info("Generating FGSM adversarial examples")
         adv_img = fgsm_attack(model, img, lbs, eps=eps)
         logger.info("Evaluating model on adversarial examples")
         adv_preds = model(adv_img).argmax(1)
         adv_acc = (adv_preds == lbs).float().mean().item()
 
-        logger.info(f"Batch adversarial accuracy: {adv_acc:.4f}")
-        logger.info(f"Accuracy drop: {clean_acc - adv_acc:.4f}")
+        logger.info(f"Batch adversarial accuracy: {adv_acc:.5f}")
+        logger.info(f"Accuracy drop: {clean_acc - adv_acc:.5f}")
 
         # Visualizing the examples
         fig, axes = plt.subplots(2, 6, figsize=(13, 5))
@@ -60,10 +60,7 @@ def adversarial_eval(model, test_loader, eps: float = 0.2):
             axes[1][i].imshow(adv_img[i].cpu().squeeze(), cmap="gray")
             color = "green" if adv_preds[i] == lbs[i] else "red"
 
-            axes[1][i].set_title(
-                f"Adversarial\nPred: {adv_preds[i].item()}",
-                color=color,
-            )
+            axes[1][i].set_title(f"Adversarial\nPred: {adv_preds[i].item()}",color=color)
             axes[1][i].axis("off")
 
         plt.tight_layout()
@@ -94,7 +91,6 @@ def adversarial_eval(model, test_loader, eps: float = 0.2):
                 ha="center",
                 va="bottom",
             )
-
 
         save_fig(fig, "mnist_adv_acc_bar.png")
         plt.close(fig)

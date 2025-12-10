@@ -1,14 +1,14 @@
 import sys
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from river.drift import ADWIN
-from scipy.stats import ks_2samp
+import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
+from scipy.stats import ks_2samp
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+from river.drift import ADWIN
 from src.config import SEED
 from src.logger import logging
 from src.exception import CustomException
@@ -17,31 +17,26 @@ from src.utils import adwin_change_detected, compute_psi, save_fig
 
 # Iris classification and drift detection with ADWIN.
 def iris_pipeline():
-    logger = logging.getLogger("iris_pipeline")
+    logger = logging.getLogger("Iris_pipeline")
     try:
         logger.info("Starting IRIS CLASSIFICATION & DRIFT DETECTION")
         iris = load_iris(as_frame=True)
         X: pd.DataFrame = iris.data
         y = iris.target
 
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, stratify=y, random_state=SEED
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=SEED)
         logger.info(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}")
-
 
         scaler = StandardScaler()
         X_train_s = scaler.fit_transform(X_train)
         X_test_s = scaler.transform(X_test)
-
         model = GradientBoostingClassifier(random_state=SEED)
         model.fit(X_train_s, y_train)
 
 
         preds = model.predict(X_test_s)
         base_acc = accuracy_score(y_test, preds)
-        logger.info(f"Baseline accuracy: {base_acc:.4f}")
+        logger.info(f"Baseline accuracy: {base_acc:.5f}")
 
         logger.info("Starting drift detection")
         feature = X.columns[0]
@@ -50,16 +45,16 @@ def iris_pipeline():
         ks_stat, ks_p = ks_2samp(base_vals, shifted_vals)
         psi_val = compute_psi(base_vals, shifted_vals)
 
-        logger.info(f"KS statistic: {ks_stat:.4f}, p-value: {ks_p:.6f}")
-        logger.info(f"PSI: {psi_val:.4f}")
+        logger.info(f"KS statistic: {ks_stat:.5f}, p-value: {ks_p:.6f}")
+        logger.info(f"PSI: {psi_val:.5f}")
 
 
         # Ddistribution plots
         logger.info("Plotting distributions")
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.hist(base_vals, bins=20, alpha=0.6, label="Train", color="blue")
-        ax.hist(X_test[feature], bins=20, alpha=0.6, label="Test", color="green")
-        ax.hist(shifted_vals, bins=20, alpha=0.6, label="Shifted", color="orange")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.hist(base_vals, bins=20, alpha=0.6, label="Train", color="red")
+        ax.hist(X_test[feature], bins=20, alpha=0.6, label="Test", color="blue")
+        ax.hist(shifted_vals, bins=20, alpha=0.6, label="Shifted", color="yellow")
         ax.set_title(f"Distribution of '{feature}'")
         ax.set_xlabel(feature)
         ax.set_ylabel("Frequency")
@@ -80,11 +75,7 @@ def iris_pipeline():
         drift_start = 200
         length = 600
         pre = rng.normal(loc=base_mean, scale=base_std, size=drift_start)
-        post = rng.normal(
-            loc=base_mean + 2.0 * base_std,
-            scale=base_std * 1.5,
-            size=length - drift_start,
-        )
+        post = rng.normal(loc=base_mean + 2.0 * base_std,scale=base_std * 1.5,size=length - drift_start)
 
 
         stream = np.concatenate([pre, post])
@@ -104,7 +95,7 @@ def iris_pipeline():
             logger.info(f"First detection index: {detected[0]}")
 
         # Plotting stream and detections
-        fig, ax = plt.subplots(figsize=(13, 6))
+        fig, ax = plt.subplots(figsize=(15, 6))
         ax.plot(stream, label="Feature stream", alpha=0.8)
         if detected:
             ax.scatter(

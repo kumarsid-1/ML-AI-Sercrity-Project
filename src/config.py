@@ -8,23 +8,15 @@ from src.exception import CustomException
 
 
 # GLOBAL SETTINGS
-SEED: int = 42
+SEED: int = 50
 DEVICE = torch.device("cpu")
-
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(PROJECT_ROOT, "results")
 
 
-logging.info(f"Device: {DEVICE}")
+logging.info(f"Device used: {DEVICE}")
 logging.info(f"Project root: {PROJECT_ROOT}")
 
-# Creating results directory if it does not exists and log any system errors
-def init_directories():
-    try:
-        os.makedirs(OUT_DIR, exist_ok=True)
-        logging.info(f"Output directory initialized at: {OUT_DIR}")
-    except Exception as e:
-        raise CustomException(e, sys)
 
 
 # Setting Global seed
@@ -40,6 +32,15 @@ def set_seed(seed: int = SEED) -> None:
         raise CustomException(e, sys)
 
 
+# Creating results directory if it does not exists and log any system errors
+def init_directories():
+    try:
+        os.makedirs(OUT_DIR, exist_ok=True)
+        logging.info(f"Output directory initialized at: {OUT_DIR}")
+    except Exception as e:
+        raise CustomException(e, sys)
+
+        
 # Initialize on import
 try:
     init_directories()

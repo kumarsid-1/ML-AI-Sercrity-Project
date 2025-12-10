@@ -1,5 +1,4 @@
 import sys
-
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -32,7 +31,6 @@ class TinyCNN(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 10),
         )
-
         self.logger.info("TinyCNN model initialized")
 
 
@@ -49,30 +47,18 @@ def train_mnist(epochs: int = 3):
 
         transform = transforms.ToTensor()
         logger.info("Downloading MNIST dataset")
-        train_data = torchvision.datasets.MNIST(
-            "./data", train=True, download=True, transform=transform
-        )
-        test_data = torchvision.datasets.MNIST(
-            "./data", train=False, download=True, transform=transform
-        )
+        train_data = torchvision.datasets.MNIST("./data", train=True, download=True, transform=transform)
+        test_data = torchvision.datasets.MNIST("./data", train=False, download=True, transform=transform)
 
 
         subset_size = 10_000
         if len(train_data) > subset_size:
-            train_data, _ = torch.utils.data.random_split(
-                train_data, [subset_size, len(train_data) - subset_size]
-            )
+            train_data, _ = torch.utils.data.random_split(train_data, [subset_size, len(train_data) - subset_size])
             logger.info(f"Using subset of train data of {subset_size} samples")
     
-        train_loader = torch.utils.data.DataLoader(
-            train_data, batch_size=64, shuffle=True
-        )
-
+        train_loader = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True)
         logger.info("Train data loaded")
-        test_loader = torch.utils.data.DataLoader(
-            test_data, batch_size=256, shuffle=False
-        )
-
+        test_loader = torch.utils.data.DataLoader(test_data, batch_size=256, shuffle=False)
         logger.info("Test data loaded")
 
         logger.info("Initializing model, optimizer, and criterion")
@@ -82,7 +68,7 @@ def train_mnist(epochs: int = 3):
         logger.info("Model, optimizer, and criterion initialized")
 
         losses = []
-        logger.info("Starting training")
+        logger.info("Training Started")
 
         for epoch in range(1, epochs + 1):
             model.train()
@@ -90,13 +76,11 @@ def train_mnist(epochs: int = 3):
 
             for img, lbl in train_loader:
                 img, lbl = img.to(DEVICE), lbl.to(DEVICE)
-
                 optimizer.zero_grad()
                 preds = model(img)
                 loss = criterion(preds, lbl)
                 loss.backward()
                 optimizer.step()
-
                 running_loss += loss.item()
 
             epoch_loss = running_loss / len(train_loader)
@@ -125,7 +109,7 @@ def train_mnist(epochs: int = 3):
                 total += len(lbl)
 
         acc = correct / total
-        logger.info(f"MNIST test accuracy: {acc:.4f}")
+        logger.info(f"MNIST test accuracy is: {acc:.4f}")
         return model, test_loader, acc
 
 

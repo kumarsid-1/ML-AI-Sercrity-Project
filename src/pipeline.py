@@ -14,26 +14,25 @@ def main():
     try:
         set_seed(SEED)
         logger.info("PROJECT STARTING")
-        logger.info(f"Device: {DEVICE}")
-        logger.info(f"Random seed: {SEED}")
-        logger.info(f"Output directory: {OUT_DIR}")
+        logger.info(f"Device used: {DEVICE}")
+        logger.info(f"Random seed set to: {SEED}")
+        logger.info(f"Output directory is: {OUT_DIR}")
 
 
         logger.info("Starting Iris drift")
         iris_summary = iris_pipeline()
-        logger.info("Completed Iris drift ")
+        logger.info("Iris drift Completed")
 
 
         logger.info("Starting MNIST training")
         model, test_loader, mnist_acc = train_mnist(epochs=3)
-        logger.info("Completed MNIST training")
+        logger.info("MNIST training Completed")
 
 
         logger.info("Starting adversarial evaluation")
         clean_acc, adv_acc = adversarial_eval(model, test_loader, eps=0.2)
-        logger.info("Completed adversarial evaluation")
+        logger.info("Adversarial evaluation completed")
 
-        logger.info("Generating summary")
         summary = {
             "iris": {
                 "baseline_accuracy": iris_summary["baseline"],
@@ -52,7 +51,6 @@ def main():
             },
         }
 
-        
         summary_path = os.path.join(OUT_DIR, "summary.json")
         with open(summary_path, "w") as f:
             json.dump(summary, f, indent=2)

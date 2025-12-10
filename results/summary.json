@@ -1,16 +1,16 @@
 {
   "iris": {
     "baseline_accuracy": 0.9666666666666667,
-    "ks_statistic": 0.38333333333333336,
-    "ks_p_value": 0.0012949375507176797,
-    "psi": 3.2845500706532333,
+    "ks_statistic": 0.4166666666666667,
+    "ks_p_value": 0.0003305057924202733,
+    "psi": 1.9909504382781555,
     "adwin_first_detection": null,
     "adwin_total_detections": 0
   },
   "mnist": {
-    "test_accuracy": 0.9637,
-    "clean_accuracy": 0.984375,
-    "adversarial_accuracy": 0.24609375,
-    "accuracy_drop": 0.73828125
+    "test_accuracy": 0.9653,
+    "clean_accuracy": 0.9921875,
+    "adversarial_accuracy": 0.3125,
+    "accuracy_drop": 0.6796875
   }
 }
