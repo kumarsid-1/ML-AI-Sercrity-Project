@@ -19,7 +19,6 @@ from src.utils import adwin_change_detected, compute_psi, save_fig
 def iris_pipeline():
     logger = logging.getLogger("iris_pipeline")
     try:
-        logger.info("=" * 50)
         logger.info("Starting IRIS CLASSIFICATION & DRIFT DETECTION")
         iris = load_iris(as_frame=True)
         X: pd.DataFrame = iris.data
@@ -43,7 +42,6 @@ def iris_pipeline():
         preds = model.predict(X_test_s)
         base_acc = accuracy_score(y_test, preds)
         logger.info(f"Baseline accuracy: {base_acc:.4f}")
-        logger.info("=" * 50)
 
         logger.info("Starting drift detection")
         feature = X.columns[0]
@@ -70,7 +68,7 @@ def iris_pipeline():
         save_fig(fig, "iris_feature_dist.png")
         plt.close(fig)
         logger.info("Done")
-        logger.info("=" * 50)
+
 
         # Drift stream
         logger.info("Generating drift stream")
@@ -91,7 +89,6 @@ def iris_pipeline():
 
         stream = np.concatenate([pre, post])
         logger.info(f"Drift starts at index {drift_start}, Stream length: {len(stream)}")
-        logger.info("=" * 50)
         logger.info("Starting ADWIN drift detection")
 
 
@@ -131,7 +128,6 @@ def iris_pipeline():
         save_fig(fig, "iris_adwin_stream.png")
         plt.close(fig)
         logger.info("IRIS CLASSIFICATION & DRIFT DETECTION COMPLETED")
-        logger.info("=" * 50)
 
 
         return {

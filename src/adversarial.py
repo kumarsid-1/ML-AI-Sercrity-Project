@@ -29,7 +29,6 @@ def fgsm_attack(model, img, lbs, eps: float = 0.2):
 def adversarial_eval(model, test_loader, eps: float = 0.2):
     logger = logging.getLogger("adversarial_eval")
     try:
-        logger.info("=" * 60)
         logger.info("Starting ADVERSARIAL ATTACK TESTING (FGSM)")
         logger.info(f"Epsilon: {eps}")
         img, lbs = next(iter(test_loader))

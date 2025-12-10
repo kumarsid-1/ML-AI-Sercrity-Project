@@ -14,7 +14,6 @@ def main():
     try:
         set_seed(SEED)
         logger.info("PROJECT STARTING")
-        logger.info("=" * 50)
         logger.info(f"Device: {DEVICE}")
         logger.info(f"Random seed: {SEED}")
         logger.info(f"Output directory: {OUT_DIR}")

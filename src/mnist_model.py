@@ -44,7 +44,6 @@ def train_mnist(epochs: int = 3):
     logger = logging.getLogger("train_mnist")
 
     try:
-        logger.info("=" * 60)
         logger.info("Initializing CNN TRAINING on MNIST dataset.")
         logger.info(f"Using device: {DEVICE}")
 

@@ -89,7 +89,6 @@ def build_iris_giskard_objects() -> Tuple[Model, Dataset]:
 
         return giskard_model, giskard_dataset
         logging.info("Iris model and Giskard Model wrappers built")
-        logging.info("=" * 50)
 
 
     except Exception as e:
@@ -97,10 +96,8 @@ def build_iris_giskard_objects() -> Tuple[Model, Dataset]:
 
 # Runing the Giskard vulnerability scan on the Iris dataset and model.
 def run_iris_scan(save_html: bool = True):
-    logging.info("=" * 50)
     logger = logging.getLogger("giskard_run_scan")
     try:
-        logger.info("=" * 50)
         logger.info("Giskard: Starting Iris vulnerability scan")
 
 
@@ -115,7 +112,6 @@ def run_iris_scan(save_html: bool = True):
         logger.info("Running Giskard scan")
         scan_report = scan(model, dataset)
         logger.info("Giskard scan completed")
-        logger.info("=" * 50)
         logger.info("Giskard scan report:")
         if save_html:
             os.makedirs(OUT_DIR, exist_ok=True)
@@ -124,7 +120,6 @@ def run_iris_scan(save_html: bool = True):
             logger.info(f"Giskard HTML report saved to: {html_path}")
         return scan_report
         logging.info("Giskard scan report generated")
-        logging.info("=" * 50)
 
 
     except Exception as e:
@@ -159,7 +154,6 @@ def main():
         logger.info("Running Giskard setup CLI")
         generate_iris_test_suite()
         logger.info("Giskard setup completed")
-        logger.info("=" * 50)
 
 
     except CustomException:
