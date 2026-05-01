@@ -1,0 +1,21 @@
+{
+    "clean_accuracy": 0.99219,
+    "attacks": {
+        "fgsm": {
+            "adversarial_accuracy": 0.3125,
+            "accuracy_drop": 0.67969,
+            "attack_success_rate": 68.5
+        },
+        "pgd": {
+            "adversarial_accuracy": 0.0,
+            "accuracy_drop": 0.99219,
+            "attack_success_rate": 100.0
+        },
+        "deepfool": {
+            "adversarial_accuracy": 0.50391,
+            "accuracy_drop": 0.48828,
+            "attack_success_rate": 49.21
+        }
+    },
+    "strongest_attack": "PGD"
+}

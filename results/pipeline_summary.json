@@ -1,0 +1,34 @@
+{
+  "project": "ML-AI-Security-Project",
+  "authors": [
+    "Siddharth Kumar",
+    "Siddhanth Harish Bist"
+  ],
+  "iris_drift_detection": {
+    "baseline_accuracy": 0.96667,
+    "ks_statistic": 0.41667,
+    "ks_p_value": 0.000331,
+    "psi": 1.99095,
+    "adwin_first_detection": null,
+    "adwin_total_detections": 0
+  },
+  "mnist_classification": {
+    "test_accuracy": 0.9653
+  },
+  "adversarial_robustness": {
+    "clean_accuracy": 0.99219,
+    "fgsm_attack": {
+      "adversarial_accuracy": 0.3125,
+      "accuracy_drop": 0.67969
+    },
+    "pgd_attack": {
+      "adversarial_accuracy": 0.0,
+      "accuracy_drop": 0.99219
+    },
+    "deepfool_attack": {
+      "adversarial_accuracy": 0.50391,
+      "accuracy_drop": 0.48828
+    },
+    "strongest_attack": "PGD"
+  }
+}

@@ -1,0 +1,10 @@
+{
+    "attack": "FGSM",
+    "parameters": {
+        "eps": 0.2
+    },
+    "clean_accuracy": 0.99219,
+    "adversarial_accuracy": 0.3125,
+    "accuracy_drop": 0.67969,
+    "success_rate": 68.5
+}
