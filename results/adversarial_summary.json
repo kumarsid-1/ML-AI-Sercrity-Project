@@ -1,21 +1,29 @@
 {
-    "clean_accuracy": 0.99219,
-    "attacks": {
-        "fgsm": {
-            "adversarial_accuracy": 0.3125,
-            "accuracy_drop": 0.67969,
-            "attack_success_rate": 68.5
-        },
-        "pgd": {
-            "adversarial_accuracy": 0.0,
-            "accuracy_drop": 0.99219,
-            "attack_success_rate": 100.0
-        },
-        "deepfool": {
-            "adversarial_accuracy": 0.50391,
-            "accuracy_drop": 0.48828,
-            "attack_success_rate": 49.21
+    "FGSM": {
+        "attack_name": "FGSM",
+        "accuracy": 0.4118,
+        "runtime_seconds": 13.769583702087402,
+        "attack_parameters": {
+            "epsilon": 0.2
         }
     },
-    "strongest_attack": "PGD"
+    "PGD": {
+        "attack_name": "PGD",
+        "accuracy": 0.0688,
+        "runtime_seconds": 151.95328545570374,
+        "attack_parameters": {
+            "epsilon": 0.3,
+            "step_size": 0.01,
+            "iterations": 20
+        }
+    },
+    "DeepFool": {
+        "attack_name": "DeepFool",
+        "accuracy": 0.0087,
+        "runtime_seconds": 3320.7990534305573,
+        "attack_parameters": {
+            "max_iterations": 15,
+            "overshoot": 0.02
+        }
+    }
 }

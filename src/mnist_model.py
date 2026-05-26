@@ -1,117 +1,289 @@
+import os
 import sys
-import matplotlib.pyplot as plt
+import time
+import json
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
-from src.config import DEVICE
+
+import matplotlib.pyplot as plt
+
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+
 from src.logger import logging
 from src.exception import CustomException
-from src.utils import save_fig
 
-# Tiny CNN model for MNIST classification.
-class TinyCNN(nn.Module):
-    logger = logging.getLogger("TinyCNN")
+from src.config import (
+    DEVICE,
+    RESULTS_DIR,
+    TRAINING_CONFIG
+)
+
+# =============================================================================
+# CNN MODEL
+# =============================================================================
+
+class CNNModel(nn.Module):
+
     def __init__(self):
-        self.logger.info("Initializing TinyCNN model")
-        super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(1, 16, 3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(16, 32, 3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
+
+        super(CNNModel, self).__init__()
+
+        self.conv1 = nn.Conv2d(
+            in_channels=1,
+            out_channels=32,
+            kernel_size=3
         )
 
-        self.fc = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(32 * 7 * 7, 128),
-            nn.ReLU(),
-            nn.Linear(128, 10),
+        self.conv2 = nn.Conv2d(
+            in_channels=32,
+            out_channels=64,
+            kernel_size=3
         )
-        self.logger.info("TinyCNN model initialized")
 
+        self.pool = nn.MaxPool2d(2)
+
+        self.relu = nn.ReLU()
+
+        self.fc1 = nn.Linear(
+            9216,
+            128
+        )
+
+        self.fc2 = nn.Linear(
+            128,
+            10
+        )
 
     def forward(self, x):
-        return self.fc(self.conv(x))
 
-# Train a TinyCNN on MNIST dataset (CPU-friendly subset)
-def train_mnist(epochs: int = 3):
-    logger = logging.getLogger("train_mnist")
+        x = self.relu(
+            self.conv1(x)
+        )
+
+        x = self.relu(
+            self.conv2(x)
+        )
+
+        x = self.pool(x)
+
+        x = x.view(
+            x.size(0),
+            -1
+        )
+
+        x = self.relu(
+            self.fc1(x)
+        )
+
+        x = self.fc2(x)
+
+        return x
+
+# =============================================================================
+# DATA LOADER
+# =============================================================================
+
+def get_data_loaders():
 
     try:
-        logger.info("Initializing CNN TRAINING on MNIST dataset.")
-        logger.info(f"Using device: {DEVICE}")
 
-        transform = transforms.ToTensor()
-        logger.info("Downloading MNIST dataset")
-        train_data = torchvision.datasets.MNIST("./data", train=True, download=True, transform=transform)
-        test_data = torchvision.datasets.MNIST("./data", train=False, download=True, transform=transform)
+        logging.info(
+            "Loading MNIST dataset"
+        )
 
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
 
-        subset_size = 10_000
-        if len(train_data) > subset_size:
-            train_data, _ = torch.utils.data.random_split(train_data, [subset_size, len(train_data) - subset_size])
-            logger.info(f"Using subset of train data of {subset_size} samples")
-    
-        train_loader = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True)
-        logger.info("Train data loaded")
-        test_loader = torch.utils.data.DataLoader(test_data, batch_size=256, shuffle=False)
-        logger.info("Test data loaded")
+        train_dataset = datasets.MNIST(
+            root="./data",
+            train=True,
+            download=True,
+            transform=transform
+        )
 
-        logger.info("Initializing model, optimizer, and criterion")
-        model = TinyCNN().to(DEVICE)
-        optimizer = optim.Adam(model.parameters(), lr=1e-3)
-        criterion = nn.CrossEntropyLoss()
-        logger.info("Model, optimizer, and criterion initialized")
+        test_dataset = datasets.MNIST(
+            root="./data",
+            train=False,
+            download=True,
+            transform=transform
+        )
 
-        losses = []
-        logger.info("Training Started")
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=TRAINING_CONFIG["batch_size"],
+            shuffle=True
+        )
 
-        for epoch in range(1, epochs + 1):
-            model.train()
-            running_loss = 0.0
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=TRAINING_CONFIG["batch_size"],
+            shuffle=False
+        )
 
-            for img, lbl in train_loader:
-                img, lbl = img.to(DEVICE), lbl.to(DEVICE)
-                optimizer.zero_grad()
-                preds = model(img)
-                loss = criterion(preds, lbl)
-                loss.backward()
-                optimizer.step()
-                running_loss += loss.item()
+        logging.info(
+            "MNIST dataset loaded successfully"
+        )
 
-            epoch_loss = running_loss / len(train_loader)
-            losses.append(epoch_loss)
-            logger.info(f"Epoch {epoch}/{epochs} - Loss: {epoch_loss:.4f}")
-
-
-        # Plot training loss
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.plot(range(1, epochs + 1), losses, marker="o")
-        ax.set_title("MNIST Training Loss")
-        ax.set_xlabel("Epoch")
-        ax.set_ylabel("Loss")
-        ax.grid(True, alpha=0.3)
-        save_fig(fig, "mnist_loss.png")
-        plt.close(fig)
-
-
-        # Evaluate on test set
-        model.eval()
-        correct, total = 0, 0
-        with torch.no_grad():
-            for img, lbl in test_loader:
-                preds = model(img.to(DEVICE)).argmax(1)
-                correct += (preds == lbl.to(DEVICE)).sum().item()
-                total += len(lbl)
-
-        acc = correct / total
-        logger.info(f"MNIST test accuracy is: {acc:.4f}")
-        return model, test_loader, acc
-
+        return train_loader, test_loader
 
     except Exception as e:
+
+        raise CustomException(e, sys)
+
+# =============================================================================
+# TRAIN MODEL
+# =============================================================================
+
+def train_model():
+
+    try:
+
+        logging.info(
+            "Starting CNN training"
+        )
+
+        start_time = time.time()
+
+        train_loader, test_loader = get_data_loaders()
+
+        model = CNNModel().to(DEVICE)
+
+        criterion = nn.CrossEntropyLoss()
+
+        optimizer = optim.Adam(
+            model.parameters(),
+            lr=TRAINING_CONFIG["learning_rate"]
+        )
+
+        epoch_losses = []
+
+        model.train()
+
+        for epoch in range(
+            TRAINING_CONFIG["epochs"]
+        ):
+
+            running_loss = 0.0
+
+            for images, labels in train_loader:
+
+                images = images.to(DEVICE)
+
+                labels = labels.to(DEVICE)
+
+                optimizer.zero_grad()
+
+                outputs = model(images)
+
+                loss = criterion(
+                    outputs,
+                    labels
+                )
+
+                loss.backward()
+
+                optimizer.step()
+
+                running_loss += loss.item()
+
+            epoch_loss = (
+                running_loss / len(train_loader)
+            )
+
+            epoch_losses.append(epoch_loss)
+
+            logging.info(
+                f"Epoch "
+                f"[{epoch+1}/"
+                f"{TRAINING_CONFIG['epochs']}] "
+                f"Loss: {epoch_loss:.4f}"
+            )
+
+        runtime = time.time() - start_time
+
+        logging.info(
+            "CNN training completed successfully"
+        )
+
+        training_metadata = {
+
+            "epochs": TRAINING_CONFIG["epochs"],
+
+            "batch_size": TRAINING_CONFIG["batch_size"],
+
+            "learning_rate": (
+                TRAINING_CONFIG["learning_rate"]
+            ),
+
+            "optimizer": (
+                TRAINING_CONFIG["optimizer"]
+            ),
+
+            "device": DEVICE,
+
+            "runtime_seconds": runtime
+        }
+
+        return (
+            model,
+            test_loader,
+            training_metadata
+        )
+
+    except Exception as e:
+
+        raise CustomException(e, sys)
+
+# =============================================================================
+# EVALUATE CLEAN MODEL
+# =============================================================================
+
+def evaluate_model(
+    model,
+    test_loader
+):
+
+    try:
+
+        logging.info(
+            "Evaluating clean model"
+        )
+
+        model.eval()
+
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+
+            for images, labels in test_loader:
+
+                images = images.to(DEVICE)
+
+                labels = labels.to(DEVICE)
+
+                outputs = model(images)
+
+                preds = outputs.argmax(dim=1)
+
+                correct += (
+                    preds == labels
+                ).sum().item()
+
+                total += labels.size(0)
+
+        accuracy = correct / total
+
+        logging.info(
+            f"Clean Accuracy: {accuracy:.4f}"
+        )
+
+        return accuracy
+
+    except Exception as e:
+
         raise CustomException(e, sys)

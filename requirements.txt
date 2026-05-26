@@ -1,10 +1,11 @@
+torch
+torchvision
 numpy
 pandas
-flask
-seaborn
 matplotlib
-giskard
-torch
+scipy
+scikit-learn
+adversarial-robustness-toolbox
 river
-torchvision
+giskard
 -e .

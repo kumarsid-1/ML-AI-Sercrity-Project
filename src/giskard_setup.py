@@ -1,166 +1,281 @@
 import os
 import sys
-from typing import Tuple
-import numpy as np
+import json
+import logging
+import warnings
 import pandas as pd
-from giskard import Dataset, Model, Suite, scan
-from sklearn.datasets import load_iris
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from src.config import OUT_DIR, SEED, set_seed
+import giskard
+
+from src.logger import logging as custom_logger
 from src.exception import CustomException
-from src.logger import logging
 
-# Building the Iris model and the Giskard Model wrappers.
-def build_iris_giskard_objects() -> Tuple[Model, Dataset]:
-    logging.info("=" * 50)
-    logger = logging.getLogger("giskard_build_iris")
+from src.config import RESULTS_DIR
+
+# =============================================================================
+# SUPPRESS EXTERNAL LIBRARY VERBOSITY
+# =============================================================================
+
+warnings.filterwarnings("ignore")
+
+logging.getLogger("giskard").setLevel(logging.ERROR)
+
+logging.getLogger("mlflow").setLevel(logging.ERROR)
+
+# =============================================================================
+# GISKARD MODEL WRAPPER
+# =============================================================================
+
+def create_giskard_model(
+    model,
+    prediction_function,
+    model_name="MNIST Security Model"
+):
+
+    """
+    Wraps the trained ML model
+    using Giskard's Model API.
+    """
+
     try:
-        set_seed(SEED)
-        logger.info("Building Iris model and Giskard Model wrappers")
-    
-        
-        iris = load_iris(as_frame=True)
-        X: pd.DataFrame = iris.data.copy()
-        y: pd.Series = iris.target.copy()
-        feature_names = list(X.columns)
-        target_name = "target"
 
-
-        # Mapping numeric features to string features
-        label_map = {i: name for i, name in enumerate(iris.target_names)}
-        y_str = y.map(label_map)
-        logger.info("Iris data loaded")
-
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X,
-            y_str,
-            test_size=0.2,
-            stratify=y_str,
-            random_state=SEED,
+        custom_logger.info(
+            "Initializing Giskard model wrapper"
         )
-        logger.info("Iris data split into train and test sets")
-        
-        
-        scaler = StandardScaler()
-        X_train_s = scaler.fit_transform(X_train)
-        logger.info("Iris StandardScaler model trained for Giskard")
 
-
-        clfs = GradientBoostingClassifier(random_state=SEED)
-        clfs.fit(X_train_s, y_train)
-        logger.info("Iris GradientBoosting model trained for Giskard")
-        
-
-        def prediction_function(df: pd.DataFrame) -> np.ndarray:
-            data = df[feature_names]
-            data_s = scaler.transform(data)
-            return clfs.predict_proba(data_s)
-
-
-        df_full = X.copy()
-        df_full[target_name] = y_str
-
-
-        giskard_dataset = Dataset(
-            df=df_full,
-            target=target_name,
-            name="Iris dataset (GradientBoosting)",
-            cat_columns=[],
-        )
-        logger.info("Giskard dataset created")
-
-
-        classification_labels = list(clfs.classes_)
-        logger.info(f"Giskard model classification labels: {classification_labels}")
-
-
-        giskard_model = Model(
+        wrapped_model = giskard.Model(
             model=prediction_function,
             model_type="classification",
-            name="Iris GradientBoosting (Giskard)",
-            description="Iris classifier with StandardScaler + GradientBoostingClassifier",
-            feature_names=feature_names,
-            classification_labels=classification_labels,
+            name=model_name
         )
 
+        custom_logger.info(
+            "Giskard model wrapper created successfully"
+        )
 
-        return giskard_model, giskard_dataset
-        logging.info("Iris model and Giskard Model wrappers built")
-
+        return wrapped_model
 
     except Exception as e:
+
         raise CustomException(e, sys)
 
-# Runing the Giskard vulnerability scan on the Iris dataset and model.
-def run_iris_scan(save_html: bool = True):
-    logger = logging.getLogger("giskard_run_scan")
+# =============================================================================
+# GISKARD DATASET WRAPPER
+# =============================================================================
+
+def create_giskard_dataset(
+    dataframe,
+    target_column=None,
+    dataset_name="Security Evaluation Dataset"
+):
+
+    """
+    Converts Pandas DataFrame into
+    Giskard Dataset object.
+    """
+
     try:
-        logger.info("Giskard: Starting Iris vulnerability scan")
 
+        custom_logger.info(
+            "Creating Giskard dataset wrapper"
+        )
 
-        model, dataset = build_iris_giskard_objects()
-        logger.info("Iris model and Giskard dataset built")
-        logger.info(f"Dataset shape: {dataset.df.shape}")
-        logger.info(f"Dataset target column: {dataset.target}")
-        logger.info(f"Feature columns: {model.meta.feature_names}")
-        logger.info(f"Model labels: {model.meta.classification_labels}")
+        dataset = giskard.Dataset(
+            dataframe=dataframe,
+            target=target_column,
+            name=dataset_name
+        )
 
+        custom_logger.info(
+            "Giskard dataset created successfully"
+        )
 
-        logger.info("Running Giskard scan")
-        scan_report = scan(model, dataset)
-        logger.info("Giskard scan completed")
-        logger.info("Giskard scan report:")
-        if save_html:
-            os.makedirs(OUT_DIR, exist_ok=True)
-            html_path = os.path.join(OUT_DIR, "iris_giskard_scan.html")
-            scan_report.to_html(html_path)
-            logger.info(f"Giskard HTML report saved to: {html_path}")
+        return dataset
+
+    except Exception as e:
+
+        raise CustomException(e, sys)
+
+# =============================================================================
+# RUN GISKARD SECURITY SCAN
+# =============================================================================
+
+def run_giskard_scan(
+    model,
+    dataset
+):
+
+    """
+    Executes automated Giskard scan:
+    - bias detection
+    - vulnerability detection
+    - governance auditing
+    - slice-based analysis
+    """
+
+    try:
+
+        custom_logger.info(
+            "Starting Giskard security scan"
+        )
+
+        scan_report = giskard.scan(
+            model=model,
+            dataset=dataset
+        )
+
+        custom_logger.info(
+            f"Giskard scan completed | "
+            f"Issues detected: {len(scan_report.issues)}"
+        )
+
         return scan_report
-        logging.info("Giskard scan report generated")
-
 
     except Exception as e:
+
         raise CustomException(e, sys)
 
-# Running the scan (if required) and generating a Giskard test suite from it.
-def generate_iris_test_suite(suite_name: str = "Iris security & robustness suite"):
-    logger = logging.getLogger("giskard_generate_suite")
+# =============================================================================
+# EXTRACT STRUCTURED ISSUE SUMMARY
+# =============================================================================
+
+def extract_issue_summary(
+    scan_report
+):
+
+    """
+    Converts verbose Giskard findings
+    into structured JSON-friendly format.
+    """
+
     try:
-        logger.info("Running Giskard scan and generating test suite")
-        scan_report = run_iris_scan(save_html=True)
-        suite: Suite = scan_report.generate_test_suite(suite_name)
-        logger.info("Giskard test suite generated")
 
+        issues_summary = []
 
-        save_dir = os.path.join(OUT_DIR, "iris_giskard_suite")
-        os.makedirs(save_dir, exist_ok=True)
-        suite.save(save_dir)
+        for issue in scan_report.issues:
 
+            issue_data = {
+                "issue_type": str(issue._class.name_),
+                "description": getattr(
+                    issue,
+                    "description",
+                    "No description available"
+                ),
+                "severity": getattr(
+                    issue,
+                    "severity",
+                    "Unknown"
+                )
+            }
 
-        logger.info(f"Giskard test suite saved in folder: {save_dir}")
-        return suite
+            issues_summary.append(issue_data)
 
+        summary = {
+            "total_issues_detected": len(issues_summary),
+            "issues": issues_summary
+        }
+
+        custom_logger.info(
+            "Structured Giskard summary generated"
+        )
+
+        return summary
 
     except Exception as e:
+
         raise CustomException(e, sys)
 
-# CLI entrypoint: python -m src.giskard_setup.py (Run in Terminal for project execution)
-def main():
-    logger = logging.getLogger("giskard_cli")
+# =============================================================================
+# SAVE GISKARD REPORT
+# =============================================================================
+
+def save_giskard_report(
+    report_data,
+    filename="giskard_summary.json"
+):
+
+    """
+    Saves summarized governance
+    and vulnerability findings.
+    """
+
     try:
-        logger.info("Running Giskard setup CLI")
-        generate_iris_test_suite()
-        logger.info("Giskard setup completed")
 
+        save_path = os.path.join(
+            RESULTS_DIR,
+            filename
+        )
 
-    except CustomException:
-        raise
+        with open(save_path, "w") as file:
+
+            json.dump(
+                report_data,
+                file,
+                indent=4
+            )
+
+        custom_logger.info(
+            f"Giskard summary saved: {save_path}"
+        )
+
     except Exception as e:
+
         raise CustomException(e, sys)
 
+# =============================================================================
+# COMPLETE GISKARD PIPELINE
+# =============================================================================
 
-if __name__ == "__main__":
-    main()
+def run_complete_giskard_pipeline(
+    model,
+    prediction_function,
+    dataframe,
+    target_column=None
+):
+
+    """
+    Full governance pipeline:
+    1. Wrap model
+    2. Wrap dataset
+    3. Run scan
+    4. Extract findings
+    5. Save structured report
+    """
+
+    try:
+
+        custom_logger.info(
+            "Starting complete Giskard pipeline"
+        )
+
+        wrapped_model = create_giskard_model(
+            model=model,
+            prediction_function=prediction_function
+        )
+
+        wrapped_dataset = create_giskard_dataset(
+            dataframe=dataframe,
+            target_column=target_column
+        )
+
+        scan_report = run_giskard_scan(
+            model=wrapped_model,
+            dataset=wrapped_dataset
+        )
+
+        structured_summary = extract_issue_summary(
+            scan_report
+        )
+
+        save_giskard_report(
+            structured_summary
+        )
+
+        custom_logger.info(
+            "Complete Giskard pipeline finished successfully"
+        )
+
+        return structured_summary
+
+    except Exception as e:
+
+        raise CustomException(e, sys)

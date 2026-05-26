@@ -1,0 +1,22 @@
+{
+    "drift_configuration": {
+        "feature_index": 0,
+        "feature_name": "sepal length (cm)",
+        "shift_constant": 0.8,
+        "drift_portion": 0.5,
+        "stream_length": 600,
+        "drift_start_index": 200
+    },
+    "ks_test": {
+        "ks_statistic": 0.23333333333333334,
+        "ks_p_value": 0.000541395955715701
+    },
+    "psi_score": 0.28496540373751056,
+    "adwin_results": {
+        "drift_detected": true,
+        "drift_points": [
+            127
+        ]
+    },
+    "runtime_seconds": 0.4177858829498291
+}
