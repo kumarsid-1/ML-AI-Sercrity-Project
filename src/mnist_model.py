@@ -18,7 +18,8 @@ from src.exception import CustomException
 from src.config import (
     DEVICE,
     RESULTS_DIR,
-    TRAINING_CONFIG
+    TRAINING_CONFIG,
+    ARTIFACTS_DIR
 )
 
 # =============================================================================
@@ -135,6 +136,80 @@ def get_data_loaders():
         raise CustomException(e, sys)
 
 # =============================================================================
+# SAVE TRAINING CURVE
+# =============================================================================
+
+def save_training_curve(epoch_losses):
+
+    try:
+
+        plt.figure(figsize=(8, 5))
+
+        plt.plot(
+            range(1, len(epoch_losses) + 1),
+            epoch_losses,
+            marker="o"
+        )
+
+        plt.xlabel("Epoch")
+
+        plt.ylabel("Loss")
+
+        plt.title(
+            "CNN Training Loss Curve",
+            fontsize=16
+        )
+
+        plt.grid(alpha=0.4)
+
+        save_path = os.path.join(
+            RESULTS_DIR,
+            "training_loss_curve.png"
+        )
+
+        plt.savefig(
+            save_path,
+            dpi=300,
+            bbox_inches="tight"
+        )
+
+        plt.close()
+
+        logging.info(
+            f"Saved training curve: {save_path}"
+        )
+
+    except Exception as e:
+
+        raise CustomException(e, sys)
+
+# =============================================================================
+# SAVE MODEL
+# =============================================================================
+
+def save_model(model):
+
+    try:
+
+        save_path = os.path.join(
+            ARTIFACTS_DIR,
+            "cnn_model.pth"
+        )
+
+        torch.save(
+            model.state_dict(),
+            save_path
+        )
+
+        logging.info(
+            f"Saved trained model: {save_path}"
+        )
+
+    except Exception as e:
+
+        raise CustomException(e, sys)
+
+# =============================================================================
 # TRAIN MODEL
 # =============================================================================
 
@@ -194,7 +269,9 @@ def train_model():
                 running_loss / len(train_loader)
             )
 
-            epoch_losses.append(epoch_loss)
+            epoch_losses.append(
+                epoch_loss
+            )
 
             logging.info(
                 f"Epoch "
@@ -209,23 +286,59 @@ def train_model():
             "CNN training completed successfully"
         )
 
+        # =====================================================
+        # SAVE MODEL
+        # =====================================================
+
+        save_model(model)
+
+        # =====================================================
+        # SAVE TRAINING CURVE
+        # =====================================================
+
+        save_training_curve(
+            epoch_losses
+        )
+
+        # =====================================================
+        # CLEAN MODEL EVALUATION
+        # =====================================================
+
+        clean_accuracy = evaluate_model(
+            model,
+            test_loader
+        )
+
+        # =====================================================
+        # TRAINING METADATA
+        # =====================================================
+
         training_metadata = {
 
-            "epochs": TRAINING_CONFIG["epochs"],
+            "epochs":
+            TRAINING_CONFIG["epochs"],
 
-            "batch_size": TRAINING_CONFIG["batch_size"],
+            "batch_size":
+            TRAINING_CONFIG["batch_size"],
 
-            "learning_rate": (
-                TRAINING_CONFIG["learning_rate"]
-            ),
+            "learning_rate":
+            TRAINING_CONFIG["learning_rate"],
 
-            "optimizer": (
-                TRAINING_CONFIG["optimizer"]
-            ),
+            "optimizer":
+            TRAINING_CONFIG["optimizer"],
 
-            "device": DEVICE,
+            "device":
+            DEVICE,
 
-            "runtime_seconds": runtime
+            "runtime_seconds":
+            runtime,
+
+            "clean_accuracy":
+            clean_accuracy,
+
+            # REQUIRED FOR ART
+            "loss_fn":
+            criterion
         }
 
         return (
@@ -279,7 +392,8 @@ def evaluate_model(
         accuracy = correct / total
 
         logging.info(
-            f"Clean Accuracy: {accuracy:.4f}"
+            f"Clean Accuracy: "
+            f"{accuracy:.4f}"
         )
 
         return accuracy

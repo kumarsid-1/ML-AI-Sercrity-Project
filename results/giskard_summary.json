@@ -1,0 +1,45 @@
+{
+    "total_issues_detected": 8,
+    "issues": [
+        {
+            "issue_type": "Issue",
+            "description": "For records in your dataset where `pixel_mean` >= 0.115 AND `pixel_mean` < 0.130, we found a significantly higher number of underconfident predictions (223 samples, corresponding to 15.43% of the predictions in the data slice).",
+            "severity": "Unknown"
+        },
+        {
+            "issue_type": "Issue",
+            "description": "For records in your dataset where `pixel_std` >= 0.288 AND `pixel_std` < 0.308, we found a significantly higher number of underconfident predictions (209 samples, corresponding to 12.56% of the predictions in the data slice).",
+            "severity": "Unknown"
+        },
+        {
+            "issue_type": "Issue",
+            "description": "For records in your dataset where `pixel_mean` >= 0.176, we found a significantly higher number of underconfident predictions (156 samples, corresponding to 9.93% of the predictions in the data slice).",
+            "severity": "Unknown"
+        },
+        {
+            "issue_type": "Issue",
+            "description": "For records in your dataset where `pixel_std` >= 0.352, we found a significantly higher number of underconfident predictions (153 samples, corresponding to 9.85% of the predictions in the data slice).",
+            "severity": "Unknown"
+        },
+        {
+            "issue_type": "Issue",
+            "description": "Data slice `pixel_mean` >= 0.121 AND `pixel_mean` < 0.187 seems to be highly associated to prediction None\u00a0=\u00a0`Digit_5` (100.00% of predictions in the data slice).",
+            "severity": "Unknown"
+        },
+        {
+            "issue_type": "Issue",
+            "description": "Data slice `pixel_mean` < 0.121 seems to be highly associated to prediction None\u00a0=\u00a0`Digit_1` (100.00% of predictions in the data slice).",
+            "severity": "Unknown"
+        },
+        {
+            "issue_type": "Issue",
+            "description": "We found 3 examples for which the model provides a different output depending on whether it is computing on a single data point or on a batch.",
+            "severity": "Unknown"
+        },
+        {
+            "issue_type": "Issue",
+            "description": "When feature \u201cpixel_mean\u201d is perturbed with the transformation \u201cAdd Gaussian noise\u201d, the model changes its prediction in 10.8% of the cases. We expected the predictions not to be affected by this transformation.",
+            "severity": "Unknown"
+        }
+    ]
+}

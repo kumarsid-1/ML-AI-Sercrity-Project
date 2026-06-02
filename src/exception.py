@@ -1,23 +1,18 @@
 import sys
-import traceback
-
 from src.logger import logging
 
-# =============================================================================
-# ERROR MESSAGE GENERATOR
-# =============================================================================
 
-def error_message_detail(
-    error,
-    error_detail: sys
-):
+# =============================================================
+# CUSTOM ERROR MESSAGE
+# =============================================================
+
+def error_message_detail(error, error_detail):
 
     """
-    Generates detailed custom error messages
-    including:
+    Generates detailed error message with:
     - file name
     - line number
-    - actual exception message
+    - original exception
     """
 
     _, _, exc_tb = error_detail.exc_info()
@@ -25,86 +20,37 @@ def error_message_detail(
     file_name = exc_tb.tb_frame.f_code.co_filename
 
     error_message = (
-        f"\nError occurred in Python script:\n"
-        f"File Name      : {file_name}\n"
-        f"Line Number    : {exc_tb.tb_lineno}\n"
-        f"Error Message  : {str(error)}\n"
+        f"\nError occurred in python script: "
+        f"[{file_name}] "
+        f"\nLine number: [{exc_tb.tb_lineno}] "
+        f"\nError message: [{str(error)}]"
     )
 
     return error_message
 
-# =============================================================================
+
+# =============================================================
 # CUSTOM EXCEPTION CLASS
-# =============================================================================
+# =============================================================
 
 class CustomException(Exception):
 
     """
-    Custom exception class for:
-    - structured debugging
-    - centralized error tracking
-    - cleaner production logging
-    - research reproducibility
+    Custom exception class for centralized
+    project error handling.
     """
 
-    def _init_(
-        self,
-        error_message,
-        error_detail: sys
-    ):
+    def __init__(self, error_message, error_detail):
 
-        super()._init_(error_message)
+        super().__init__(error_message)
 
         self.error_message = error_message_detail(
             error_message,
             error_detail
         )
 
-        # =============================================================
-        # LOG FULL TRACEBACK
-        # =============================================================
+        logging.error(self.error_message)
 
-        logging.error(
-            "\n========== EXCEPTION TRACEBACK ==========\n"
-        )
-
-        logging.error(traceback.format_exc())
-
-        logging.error(
-            "=========================================\n"
-        )
-
-    def _str_(self):
+    def __str__(self):
 
         return self.error_message
-
-# =============================================================================
-# OPTIONAL HELPER DECORATOR
-# =============================================================================
-
-def exception_handler(func):
-
-    """
-    Optional reusable decorator for:
-    automatic exception wrapping.
-
-    Example:
-        @exception_handler
-        def train():
-            ...
-    """
-
-    def wrapper(*args, **kwargs):
-
-        try:
-
-            return func(*args, **kwargs)
-
-        except Exception as e:
-
-            raise CustomException(
-                e,
-                sys
-            )
-
-    return wrapper

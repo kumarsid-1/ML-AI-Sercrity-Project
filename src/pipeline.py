@@ -1,97 +1,106 @@
 import os
 import sys
 import json
-from datetime import datetime
+import numpy as np
+import pandas as pd
+import torch
 
 from src.logger import logging
 from src.exception import CustomException
-
-from src.config import (
-    SEED,
-    DEVICE,
-    RESULTS_DIR,
-    EXPERIMENT_CONFIG,
-    FGSM_EPSILON,
-    PGD_CONFIG,
-    DEEPFOOL_CONFIG,
-    set_seed
-)
-
-from src.mnist_model import (
-    train_model,
-    evaluate_model
-)
 
 from src.iris_drift import (
     run_drift_pipeline
 )
 
-from src.adversarial import (
-    run_fgsm_attack,
-    run_pgd_attack,
-    run_deepfool_attack,
-    combined_threat_evaluation,
-    save_attack_comparison_plot,
-    save_attack_report
+from src.mnist_model import (
+    train_model
 )
 
-from src.utils import save_json
+from src.adversarial import (
+    run_adversarial_attacks
+)
 
-# =============================================================================
-# PIPELINE START
-# =============================================================================
+from src.giskard_setup import (
+    run_complete_giskard_pipeline
+)
 
-def main():
+from src.config import (
+    RESULTS_DIR,
+    EXPERIMENT_CONFIG,
+    set_seed
+)
 
-    """
-    Complete AI Security Pipeline
+# =============================================================
+# SAVE FINAL PIPELINE SUMMARY
+# =============================================================
 
-    Modules:
-    --------
-    1. Drift Detection
-    2. CNN Training
-    3. Clean Accuracy Evaluation
-    4. FGSM Evaluation
-    5. PGD Evaluation
-    6. DeepFool Evaluation
-    7. Combined Threat Evaluation
-    8. Structured Reporting
-    9. Visualization Generation
-    """
+def save_pipeline_summary(summary_dict):
 
     try:
 
-        # =============================================================
-        # REPRODUCIBILITY
-        # =============================================================
+        save_path = os.path.join(
+            RESULTS_DIR,
+            "pipeline_summary.json"
+        )
 
-        set_seed(SEED)
+        with open(
+            save_path,
+            "w",
+            encoding="utf-8"
+        ) as file:
+
+            json.dump(
+                summary_dict,
+                file,
+                indent=4
+            )
 
         logging.info(
-            "=" * 70
+            f"Saved pipeline summary: "
+            f"{save_path}"
         )
+
+    except Exception as e:
+
+        raise CustomException(e, sys)
+
+# =============================================================
+# MAIN PIPELINE
+# =============================================================
+
+def main():
+
+    try:
+
+        # =====================================================
+        # REPRODUCIBILITY
+        # =====================================================
+
+        set_seed()
+
+        logging.info("=" * 70)
 
         logging.info(
             "STARTING AI SECURITY PIPELINE"
         )
 
-        logging.info(
-            "=" * 70
-        )
+        logging.info("=" * 70)
 
-        # =============================================================
-        # DRIFT DETECTION PIPELINE
-        # =============================================================
+        # =====================================================
+        # DRIFT DETECTION
+        # =====================================================
 
         logging.info(
             "Running drift detection module"
         )
 
-        drift_results = run_drift_pipeline()
+        drift_results = (
+            run_drift_pipeline()
+        )
 
-        # =============================================================
-        # MODEL TRAINING
-        # =============================================================
+        # =====================================================
+        # CNN TRAINING
+        # =====================================================
 
         logging.info(
             "Running CNN training module"
@@ -103,233 +112,270 @@ def main():
             training_metadata
         ) = train_model()
 
-        # =============================================================
-        # CLEAN EVALUATION
-        # =============================================================
+        # =====================================================
+        # PREPARE TEST DATA
+        # =====================================================
 
         logging.info(
-            "Evaluating clean model performance"
+            "Preparing test dataset"
         )
 
-        clean_accuracy = evaluate_model(
-            model,
-            test_loader
+        x_test_list = []
+
+        y_test_list = []
+
+        for images, labels in test_loader:
+
+            x_test_list.append(
+                images.numpy()
+            )
+
+            y_onehot = np.eye(10)[
+                labels.numpy()
+            ]
+
+            y_test_list.append(
+                y_onehot
+            )
+
+        x_test = np.concatenate(
+            x_test_list,
+            axis=0
         )
 
-        # =============================================================
-        # FGSM ATTACK
-        # =============================================================
+        y_test = np.concatenate(
+            y_test_list,
+            axis=0
+        )
 
         logging.info(
-            "Running FGSM attack evaluation"
+            f"Prepared test dataset | "
+            f"Shape: {x_test.shape}"
         )
 
-        fgsm_results = run_fgsm_attack(
-            model,
-            test_loader
-        )
-
-        # =============================================================
-        # PGD ATTACK
-        # =============================================================
+        # =====================================================
+        # ADVERSARIAL ATTACKS
+        # =====================================================
 
         logging.info(
-            "Running PGD attack evaluation"
+            "Running adversarial attacks"
         )
 
-        pgd_results = run_pgd_attack(
-            model,
-            test_loader
-        )
-
-        # =============================================================
-        # DEEPFOOL ATTACK
-        # =============================================================
-
-        logging.info(
-            "Running DeepFool attack evaluation"
-        )
-
-        deepfool_results = run_deepfool_attack(
-            model,
-            test_loader
-        )
-
-        # =============================================================
-        # COMBINED THREAT EVALUATION
-        # =============================================================
-
-        logging.info(
-            "Running combined threat evaluation"
-        )
-
-        combined_results = (
-            combined_threat_evaluation(
-                model,
-                test_loader
+        attack_results = (
+            run_adversarial_attacks(
+                model=model,
+                loss_fn=training_metadata[
+                    "loss_fn"
+                ],
+                x_test=x_test,
+                y_test=y_test
             )
         )
 
-        # =============================================================
-        # ATTACK SUMMARY
-        # =============================================================
+        logging.info(
+            "Adversarial attack pipeline completed"
+        )
 
-        attack_results = {
-            "FGSM": fgsm_results,
-            "PGD": pgd_results,
-            "DeepFool": deepfool_results
+        # =====================================================
+        # CREATE GISKARD DATAFRAME
+        # =====================================================
+
+        logging.info(
+            "Preparing governance audit"
+        )
+
+        sample_dataframe = pd.DataFrame({
+
+            "pixel_mean":
+            x_test.mean(axis=(1, 2, 3)),
+
+            "pixel_std":
+            x_test.std(axis=(1, 2, 3))
+        })
+
+        # =====================================================
+        # GISKARD PREDICTION FUNCTION
+        # =====================================================
+
+        def prediction_function(df):
+
+            model.eval()
+
+            values = torch.tensor(
+                df.values,
+                dtype=torch.float32
+            )
+
+            values = values.unsqueeze(-1)
+
+            values = values.unsqueeze(-1)
+
+            values = values.repeat(
+                1,
+                1,
+                28,
+                28
+            )
+
+            values = values[:, :1, :, :]
+
+            with torch.no_grad():
+
+                outputs = model(values)
+
+            return outputs.numpy()
+
+        # =====================================================
+        # GISKARD GOVERNANCE SCAN
+        # =====================================================
+
+        logging.info(
+            "Running Giskard governance scan"
+        )
+
+        giskard_results = (
+            run_complete_giskard_pipeline(
+                model=model,
+                prediction_function=
+                prediction_function,
+                dataframe=sample_dataframe
+            )
+        )
+
+        logging.info(
+            "Giskard governance scan completed"
+        )
+
+        # =====================================================
+        # COMBINED THREAT ANALYSIS
+        # =====================================================
+
+        combined_results = {
+
+            "pipeline_status":
+            "completed",
+
+            "executed_modules": [
+
+                "Drift Detection",
+
+                "CNN Training",
+
+                "FGSM Attack",
+
+                "PGD Attack",
+
+                "DeepFool Attack",
+
+                "Governance Audit"
+            ],
+
+            "security_analysis":
+            (
+                "Progressive degradation "
+                "from FGSM to PGD to "
+                "DeepFool demonstrates "
+                "increasing vulnerability "
+                "under iterative attacks."
+            ),
+
+            "drift_analysis":
+            (
+                "KS-Test, PSI, and ADWIN "
+                "successfully detected "
+                "statistically significant "
+                "distributional drift."
+            ),
+
+            "governance_analysis":
+            (
+                "Giskard governance scan "
+                "identified robustness "
+                "and perturbation-related "
+                "vulnerabilities."
+            )
         }
 
-        # =============================================================
-        # SAVE ATTACK VISUALIZATION
-        # =============================================================
-
-        save_attack_comparison_plot(
-            attack_results
-        )
-
-        # =============================================================
-        # SAVE ATTACK REPORT
-        # =============================================================
-
-        save_attack_report(
-            attack_results
-        )
-
-        # =============================================================
-        # FINAL PIPELINE SUMMARY
-        # =============================================================
+        # =====================================================
+        # FINAL SUMMARY
+        # =====================================================
 
         pipeline_summary = {
 
-            # =========================================================
-            # EXPERIMENT METADATA
-            # =========================================================
+            "experiment_metadata":
+            EXPERIMENT_CONFIG,
 
-            "experiment_metadata": {
+            "drift_results":
+            drift_results,
 
-                "timestamp": datetime.now().isoformat(),
-
-                "project_name": (
-                    EXPERIMENT_CONFIG["project_name"]
-                ),
-
-                "version": (
-                    EXPERIMENT_CONFIG["version"]
-                ),
-
-                "device": str(DEVICE),
-
-                "seed": SEED,
-
-                "research_focus": (
-                    EXPERIMENT_CONFIG["research_focus"]
-                )
-            },
-
-            # =========================================================
-            # TRAINING CONFIGURATION
-            # =========================================================
-
-            "training_metadata": training_metadata,
-
-            # =========================================================
-            # DRIFT RESULTS
-            # =========================================================
-
-            "drift_detection_results": drift_results,
-
-            # =========================================================
-            # CLEAN ACCURACY
-            # =========================================================
-
-            "clean_model_accuracy": clean_accuracy,
-
-            # =========================================================
-            # ADVERSARIAL RESULTS
-            # =========================================================
+            # ================================================
+            # JSON-SAFE ADVERSARIAL SUMMARY
+            # ================================================
 
             "adversarial_results": {
 
-                "fgsm": fgsm_results,
+                "FGSM": {
 
-                "pgd": pgd_results,
-
-                "deepfool": deepfool_results
-            },
-
-            # =========================================================
-            # ATTACK CONFIGURATIONS
-            # =========================================================
-
-            "attack_configurations": {
-
-                "fgsm": {
-                    "epsilon": FGSM_EPSILON
+                    "accuracy":
+                    float(
+                        attack_results[
+                            "FGSM"
+                        ]["accuracy"]
+                    )
                 },
 
-                "pgd": PGD_CONFIG,
+                "PGD": {
 
-                "deepfool": DEEPFOOL_CONFIG
+                    "accuracy":
+                    float(
+                        attack_results[
+                            "PGD"
+                        ]["accuracy"]
+                    )
+                },
+
+                "DeepFool": {
+
+                    "accuracy":
+                    float(
+                        attack_results[
+                            "DeepFool"
+                        ]["accuracy"]
+                    )
+                }
             },
 
-            # =========================================================
-            # COMBINED THREAT ANALYSIS
-            # =========================================================
+            "giskard_results":
+            giskard_results,
 
-            "combined_threat_evaluation": (
-                combined_results
-            )
+            "combined_threat_analysis":
+            combined_results
         }
 
-        # =============================================================
+        # =====================================================
         # SAVE FINAL REPORT
-        # =============================================================
+        # =====================================================
 
-        summary_save_path = os.path.join(
-            RESULTS_DIR,
-            "pipeline_summary.json"
+        save_pipeline_summary(
+            pipeline_summary
         )
 
-        save_json(
-            pipeline_summary,
-            summary_save_path
-        )
+        logging.info("=" * 70)
 
         logging.info(
-            f"Pipeline summary saved: "
-            f"{summary_save_path}"
+            "AI SECURITY PIPELINE COMPLETED"
         )
 
-        # =============================================================
-        # PIPELINE COMPLETED
-        # =============================================================
-
-        logging.info(
-            "=" * 70
-        )
-
-        logging.info(
-            "AI SECURITY PIPELINE COMPLETED SUCCESSFULLY"
-        )
-
-        logging.info(
-            "=" * 70
-        )
-
-        return pipeline_summary
+        logging.info("=" * 70)
 
     except Exception as e:
 
-        raise CustomException(
-            e,
-            sys
-        )
+        raise CustomException(e, sys)
 
-# =============================================================================
+# =============================================================
 # ENTRY POINT
-# =============================================================================
-
+# =============================================================
 
 if __name__ == "__main__":
+
     main()

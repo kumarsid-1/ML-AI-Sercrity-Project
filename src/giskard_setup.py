@@ -43,10 +43,27 @@ def create_giskard_model(
         )
 
         wrapped_model = giskard.Model(
-            model=prediction_function,
-            model_type="classification",
-            name=model_name
-        )
+
+    model=prediction_function,
+
+    model_type="classification",
+
+    classification_labels=[
+
+        "Digit_0",
+        "Digit_1",
+        "Digit_2",
+        "Digit_3",
+        "Digit_4",
+        "Digit_5",
+        "Digit_6",
+        "Digit_7",
+        "Digit_8",
+        "Digit_9"
+    ],
+
+    name=model_name
+)
 
         custom_logger.info(
             "Giskard model wrapper created successfully"
@@ -80,7 +97,7 @@ def create_giskard_dataset(
         )
 
         dataset = giskard.Dataset(
-            dataframe=dataframe,
+            df=dataframe,
             target=target_column,
             name=dataset_name
         )
@@ -154,7 +171,7 @@ def extract_issue_summary(
         for issue in scan_report.issues:
 
             issue_data = {
-                "issue_type": str(issue._class.name_),
+                "issue_type": str(type(issue).__name__),
                 "description": getattr(
                     issue,
                     "description",

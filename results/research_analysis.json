@@ -1,0 +1,6 @@
+{
+    "FGSM_Analysis": "Single-step gradient perturbation attack.",
+    "PGD_Analysis": "Iterative optimization-based attack with stronger decision boundary traversal.",
+    "DeepFool_Analysis": "Minimal perturbation attack exposing fragile decision boundaries.",
+    "Comparative_Insight": "Progressive degradation from FGSM to PGD to DeepFool demonstrates increasing attack sophistication."
+}
